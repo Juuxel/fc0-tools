@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.juuxel"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation("blue.endless", "jankson", "1.2.0")
     implementation("org.ow2.asm", "asm", "8.0.1")
+    compileOnly("org.jetbrains", "annotations", "19.0.0")
 }
 
 configure<JavaPluginConvention> {
