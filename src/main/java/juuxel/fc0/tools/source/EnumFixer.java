@@ -20,7 +20,7 @@ public final class EnumFixer {
 	private static final String CLOSE_METHOD = "    }";
 
 	private static String getValuesRegex(String enumName) {
-		return " {4}public static " + enumName + "\\[\\] values\\(\\) {";
+		return " {4}public static " + enumName + "\\[\\] values\\(\\) \\{";
 	}
 
 	/**
