@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class EnumFixer {
-	private static final String CLASS_PREFIX = "public final class ";
+	private static final Pattern CLASS_REGEX = Pattern.compile("(?:(.+) )?final class (.+)");
 	private static final Pattern EXTENDS_REGEX = Pattern.compile("extends Enum<(\\w+)>(?: \\{)?");
 	private static final Pattern ENUM_FIELD_REGEX = Pattern.compile(" {4}public static final /\\* enum \\*/ \\w+ (\\w+) = new \\w+(\\(.*\\));");
 	private static final String CLOSE_METHOD = "    }";
@@ -76,8 +76,16 @@ public final class EnumFixer {
 			}
 
 			if (i >= index - 1) {
-				if (line.startsWith(CLASS_PREFIX)) {
-					target.add("public enum " + line.substring(CLASS_PREFIX.length()));
+				Matcher classMatcher = CLASS_REGEX.matcher(line);
+
+				if (classMatcher.matches()) {
+					String access = classMatcher.group(1);
+					if (access == null) {
+						access = "";
+					} else {
+						access += " ";
+					}
+					target.add(access + "enum " + classMatcher.group(2));
 					continue;
 				} else if (EXTENDS_REGEX.matcher(line).matches()) {
 					if (line.endsWith("{")) {
