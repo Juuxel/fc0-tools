@@ -15,8 +15,13 @@ import java.util.regex.Pattern;
 
 public final class EnumFixer {
 	private static final String CLASS_PREFIX = "public final class ";
-	private static final String EXTENDS_PREFIX = "extends Enum<";
+	private static final Pattern EXTENDS_REGEX = Pattern.compile("extends Enum<(\\w+)>");
 	private static final Pattern ENUM_FIELD_REGEX = Pattern.compile(" {4}public static final /\\* enum \\*/ \\w+ (\\w+) = new \\w+(\\(.*\\));");
+	private static final String CLOSE_METHOD = "    }";
+
+	private static String getValuesRegex(String enumName) {
+		return " {4}public static " + enumName + "\\[\\] values\\(\\) {";
+	}
 
 	/**
 	 * Fixes top-level enum declarations in a Java source file decompiled by CFR.
@@ -42,11 +47,14 @@ public final class EnumFixer {
 		// TODO: Nested enum support; 2fc doesn't use them but it doesn't hurt to support them
 
 		int index = -1; // The index of the 'extends Enum' line
+		String enumName = null;
 
 		for (int i = 0; i < lines.size(); i++) {
 			String line = lines.get(i);
 
-			if (line.startsWith("extends Enum<")) {
+			Matcher extendsMatcher = EXTENDS_REGEX.matcher(line);
+			if (extendsMatcher.matches()) {
+				enumName = extendsMatcher.group(1);
 				index = i;
 			}
 		}
@@ -55,15 +63,23 @@ public final class EnumFixer {
 
 		List<String> target = new ArrayList<>();
 		boolean wasField = false;
+		boolean inValues = false;
 
 		for (int i = 0; i < lines.size(); i++) {
 			String line = lines.get(i);
+
+			if (inValues) {
+				if (line.equals(CLOSE_METHOD)) {
+					inValues = false;
+				}
+				continue;
+			}
 
 			if (i >= index - 1) {
 				if (line.startsWith(CLASS_PREFIX)) {
 					target.add("public enum " + line.substring(CLASS_PREFIX.length()));
 					continue;
-				} else if (line.startsWith(EXTENDS_PREFIX)) {
+				} else if (EXTENDS_REGEX.matcher(line).matches()) {
 					if (line.endsWith("{")) {
 						String prev = target.get(target.size() - 1);
 						target.set(target.size() - 1, prev + " {");
@@ -86,6 +102,12 @@ public final class EnumFixer {
 					target.add("    " + name + args + ",");
 
 					wasField = true;
+					continue;
+				}
+
+				// Yeet the values() method
+				if (line.matches(getValuesRegex(enumName))) {
+					inValues = true;
 					continue;
 				}
 			}
