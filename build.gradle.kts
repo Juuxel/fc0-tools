@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.juuxel"
-version = "1.1.1"
+version = "1.1.3"
 
 repositories {
     mavenCentral()
