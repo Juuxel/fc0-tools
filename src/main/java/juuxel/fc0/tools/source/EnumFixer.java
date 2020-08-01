@@ -17,6 +17,7 @@ public final class EnumFixer {
 	private static final Pattern CLASS_REGEX = Pattern.compile("(?:(.+) )?final class (.+)");
 	private static final Pattern EXTENDS_REGEX = Pattern.compile("extends Enum<(\\w+)>(?: \\{)?");
 	private static final Pattern ENUM_FIELD_REGEX = Pattern.compile(" {4}public static final /\\* enum \\*/ \\w+ (\\w+) = new \\w+(\\(.*\\));");
+	private static final String CLINIT = "    static {";
 	private static final String CLOSE_METHOD = "    }";
 
 	private static String getValuesMethodRegex(String enumName) {
@@ -135,9 +136,16 @@ public final class EnumFixer {
 
 				// Yeet the values() method and _VALUES assignment
 				if (line.matches(getValuesMethodRegex(enumName))) {
+					// Remove blank line before the method
+					target.remove(target.size() - 1);
 					inValues = true;
 					continue;
 				} else if (valuesName != null && line.matches(getValuesAssignmentRegex(enumName, valuesName))) {
+					if (lines.get(i - 1).equals(CLINIT) && lines.get(i + 1).equals(CLOSE_METHOD)) {
+						target.remove(target.size() - 1); // Remove static initializer start
+						target.remove(target.size() - 1); // Remove blank line before static initializer
+						i++; // Skip the static initializer end
+					}
 					continue;
 				}
 			}
