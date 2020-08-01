@@ -1,0 +1,6 @@
+public enum Basic {
+    ZEROTH,
+    FIRST(1),
+    SECOND(1, 2),
+    ;
+}

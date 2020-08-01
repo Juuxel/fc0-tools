@@ -1,0 +1,6 @@
+public final class Basic
+extends Enum<Basic> {
+    public static final /* enum */ Basic ZEROTH = new Basic();
+    public static final /* enum */ Basic FIRST = new Basic(1);
+    public static final /* enum */ Basic SECOND = new Basic(1, 2);
+}

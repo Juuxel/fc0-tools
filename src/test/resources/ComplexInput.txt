@@ -1,0 +1,29 @@
+import java.util.function.Consumer;
+
+public final class Complex
+extends Enum<Complex>
+implements Consumer<Integer> {
+    public static final /* enum */ Basic ZEROTH = new Basic();
+    public static final /* enum */ Basic FIRST = new Basic(1);
+    public static final /* enum */ Basic SECOND = new Basic(1, 2);
+    private static String otherField = "hello";
+    private static final /* synthetic */ Complex[] field_105;
+    private int yes = 0;
+
+    Complex(int... ints) {
+        yes = ints.length;
+    }
+
+    @Override
+    public void accept(Integer i) {
+        yes = i;
+    }
+
+    public static Complex[] values() {
+        return field_105.clone();
+    }
+
+    static {
+        field_105 = new Complex[]{ ZEROTH, FIRST, SECOND };
+    }
+}

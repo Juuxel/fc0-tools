@@ -15,6 +15,8 @@ dependencies {
     implementation("blue.endless", "jankson", "1.2.0")
     implementation("org.ow2.asm", "asm", "8.0.1")
     compileOnly("org.jetbrains", "annotations", "19.0.0")
+
+    testImplementation("org.junit.jupiter", "junit-jupiter", "5.6.2")
 }
 
 configure<JavaPluginConvention> {
@@ -24,6 +26,13 @@ configure<JavaPluginConvention> {
 license {
     header = file("HEADER.txt")
     include("**/*.java") // Only Java files, no resources
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
 
 tasks.jar {

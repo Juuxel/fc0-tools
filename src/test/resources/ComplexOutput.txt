@@ -1,0 +1,24 @@
+import java.util.function.Consumer;
+
+public enum Complex
+implements Consumer<Integer> {
+    ZEROTH,
+    FIRST(1),
+    SECOND(1, 2),
+    ;
+    private static String otherField = "hello";
+    private int yes = 0;
+
+    Complex(int... ints) {
+        yes = ints.length;
+    }
+
+    @Override
+    public void accept(Integer i) {
+        yes = i;
+    }
+
+
+    static {
+    }
+}
