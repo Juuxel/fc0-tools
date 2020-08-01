@@ -30,8 +30,23 @@ tasks.jar {
     from("LICENSE")
 }
 
+val sourcesJar by tasks.register<Jar>("sourcesJar") {
+    group = "build"
+    description = "Assembles a jar archive containing the main sources."
+    archiveClassifier.set("sources")
+
+    from(sourceSets["main"].allSource)
+    from("LICENSE")
+}
+
+tasks.assemble {
+    dependsOn(sourcesJar)
+}
+
 publishing {
     publications.create<MavenPublication>("maven") {
         from(components["java"])
+
+        artifact(sourcesJar)
     }
 }
