@@ -19,8 +19,16 @@ public final class EnumFixer {
 	private static final Pattern ENUM_FIELD_REGEX = Pattern.compile(" {4}public static final /\\* enum \\*/ \\w+ (\\w+) = new \\w+(\\(.*\\));");
 	private static final String CLOSE_METHOD = "    }";
 
-	private static String getValuesRegex(String enumName) {
+	private static String getValuesMethodRegex(String enumName) {
 		return " {4}public static " + enumName + "\\[\\] values\\(\\) \\{";
+	}
+
+	private static Pattern getValuesFieldRegex(String enumName) {
+		return Pattern.compile(" {4}private static final /\\* synthetic \\*/ " + enumName + "\\[\\] ([a-zA-Z0-9_]+);");
+	}
+
+	private static String getValuesAssignmentRegex(String enumName, String valuesName) {
+		return " {8}" + valuesName + " = new " + enumName + "\\[\\] *\\{.+\\};";
 	}
 
 	/**
@@ -46,20 +54,30 @@ public final class EnumFixer {
 	public static List<String> fixEnums(List<String> lines) {
 		// TODO: Nested enum support; 2fc doesn't use them but it doesn't hurt to support them
 
-		int index = -1; // The index of the 'extends Enum' line
+		int extendsIndex = -1; // The index of the 'extends Enum' line
+		int valuesIndex = -1; // The index of the 'private static final /* synthetic */ EnumName[] _VALUES' line
 		String enumName = null;
+		String valuesName = null;
 
 		for (int i = 0; i < lines.size(); i++) {
 			String line = lines.get(i);
 
-			Matcher extendsMatcher = EXTENDS_REGEX.matcher(line);
-			if (extendsMatcher.matches()) {
-				enumName = extendsMatcher.group(1);
-				index = i;
+			if (enumName == null) {
+				Matcher extendsMatcher = EXTENDS_REGEX.matcher(line);
+				if (extendsMatcher.matches()) {
+					enumName = extendsMatcher.group(1);
+					extendsIndex = i;
+				}
+			} else if (valuesName == null) {
+				Matcher valuesMatcher = getValuesFieldRegex(enumName).matcher(line);
+				if (valuesMatcher.matches()) {
+					valuesName = valuesMatcher.group(1);
+					valuesIndex = i;
+				}
 			}
 		}
 
-		if (index == -1) return null; // Nothing to process
+		if (extendsIndex == -1) return null; // Nothing to process
 
 		List<String> target = new ArrayList<>();
 		boolean wasField = false;
@@ -75,7 +93,7 @@ public final class EnumFixer {
 				continue;
 			}
 
-			if (i >= index - 1) {
+			if (i >= extendsIndex - 1) {
 				Matcher classMatcher = CLASS_REGEX.matcher(line);
 
 				if (classMatcher.matches()) {
@@ -87,13 +105,15 @@ public final class EnumFixer {
 					}
 					target.add(access + "enum " + classMatcher.group(2));
 					continue;
-				} else if (EXTENDS_REGEX.matcher(line).matches()) {
+				} else if (i == extendsIndex) {
 					if (line.endsWith("{")) {
 						String prev = target.get(target.size() - 1);
 						target.set(target.size() - 1, prev + " {");
 					}
 
 					continue;
+				} else if (i == valuesIndex) {
+					continue; // Yeet the line
 				}
 
 				Matcher enumMatcher = ENUM_FIELD_REGEX.matcher(line);
@@ -113,9 +133,11 @@ public final class EnumFixer {
 					continue;
 				}
 
-				// Yeet the values() method
-				if (line.matches(getValuesRegex(enumName))) {
+				// Yeet the values() method and _VALUES assignment
+				if (line.matches(getValuesMethodRegex(enumName))) {
 					inValues = true;
+					continue;
+				} else if (valuesName != null && line.matches(getValuesAssignmentRegex(enumName, valuesName))) {
 					continue;
 				}
 			}
