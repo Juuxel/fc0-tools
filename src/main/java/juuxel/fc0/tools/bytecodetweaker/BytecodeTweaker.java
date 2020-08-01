@@ -46,7 +46,7 @@ public final class BytecodeTweaker {
 
 		for (String className : classNames) {
 			Set<String> bridges = config.bridges.getOrDefault(className, Collections.emptySet());
-			visitors.put(className, cv -> new Tweak(cv, bridges));
+			visitors.put(className, cv -> new Visitor(cv, bridges));
 		}
 	}
 
@@ -81,10 +81,10 @@ public final class BytecodeTweaker {
 		}
 	}
 
-	private static final class Tweak extends ClassVisitor {
+	private static final class Visitor extends ClassVisitor {
 		private final Set<String> bridges;
 
-		Tweak(ClassVisitor classVisitor, Set<String> bridges) {
+		Visitor(ClassVisitor classVisitor, Set<String> bridges) {
 			super(Opcodes.ASM4, classVisitor);
 			this.bridges = bridges;
 		}
